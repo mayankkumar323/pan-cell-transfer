@@ -142,7 +142,7 @@ const NSString *collectionCellIdentity = @"aDECollectionCell";
         //Save index
         self.currentSelectedCellIndexPath = [self.bottomCollectionView indexPathForCell:(DECollectionViewCell*)gesture.view];
         //Save data
-        self.currentSelectedCellData = [[UIImageView alloc] initWithImage:((UIImageView*)[self.bottomCVDataSource objectAtIndex:self.currentSelectedCellIndexPath.row]).image];
+        self.currentSelectedCellData = [self.bottomCVDataSource objectAtIndex:self.currentSelectedCellIndexPath.row];
         //Get initial touch location
         self.panInitialTouchLocation = touchLocation;
     } else if (gesture.state == UIGestureRecognizerStateChanged) {
@@ -209,12 +209,10 @@ const NSString *collectionCellIdentity = @"aDECollectionCell";
 }
 
 - (void) insertPlaceHolderToTopCollection {
-    if (self.currentSelectedCellIndexPath && !self.cellDropIndex) {
-        self.cellDropIndex = [NSIndexPath indexPathForRow:1 inSection:0];
+    if (!self.cellDropIndex) {
+        self.cellDropIndex = [NSIndexPath indexPathForRow:((NSIndexPath*)[[self.topCollectionView indexPathsForVisibleItems] objectAtIndex:1]).row inSection:0];
         [self.topCollectionView performBatchUpdates:^{
-            UIImageView *sourceImageView = self.currentSelectedCellData;
-            UIImageView *tempImageView = [[UIImageView alloc] initWithImage:sourceImageView.image];
-            [self.topCVDataSource insertObject:tempImageView atIndex:self.cellDropIndex.row];
+            [self.topCVDataSource insertObject:self.currentSelectedCellData atIndex:self.cellDropIndex.row];
             [self.topCollectionView insertItemsAtIndexPaths:@[self.cellDropIndex]];
         }completion:nil];
     }
@@ -234,7 +232,7 @@ const NSString *collectionCellIdentity = @"aDECollectionCell";
 - (void) addDeletedCellBackToBottomCollectionView {
     //Add cell back
     [self.bottomCollectionView performBatchUpdates:^{
-        [self.bottomCVDataSource insertObject:[self.bottomCVDataSource objectAtIndex:self.currentSelectedCellIndexPath.row] atIndex:self.currentSelectedCellIndexPath.row];
+        [self.bottomCVDataSource insertObject:self.currentSelectedCellData atIndex:self.currentSelectedCellIndexPath.row];
         [self.bottomCollectionView insertItemsAtIndexPaths:@[self.currentSelectedCellIndexPath]];
     } completion:^(BOOL finished){
         [self.currentSelectedCellSnapshot removeFromSuperview];
@@ -252,16 +250,20 @@ const NSString *collectionCellIdentity = @"aDECollectionCell";
         //Clean up
         self.currentSelectedCellIndexPath = nil;
         self.currentSelectedCellSnapshot = nil;
+        self.currentSelectedCellData = nil;
     }];
 }
 
 - (void) addCellToTopCollectionView {
-    DECollectionViewCell *placeHolderCell = (DECollectionViewCell*)[self.topCollectionView cellForItemAtIndexPath:self.cellDropIndex];
-    placeHolderCell.isPlaceHolder = NO;
-    [self.currentSelectedCellSnapshot removeFromSuperview];
-    //Clean up
-    self.currentSelectedCellIndexPath = nil;
-    self.currentSelectedCellSnapshot = nil;
+    if (self.cellDropIndex) {
+        DECollectionViewCell *placeHolderCell = (DECollectionViewCell*)[self.topCollectionView cellForItemAtIndexPath:self.cellDropIndex];
+        self.cellDropIndex = nil;
+        placeHolderCell.isPlaceHolder = NO;
+        [self.currentSelectedCellSnapshot removeFromSuperview];
+        //Clean up
+        self.currentSelectedCellIndexPath = nil;
+        self.currentSelectedCellSnapshot = nil;
+    }
 }
 
 - (void)dynamicAnimatorDidPause:(UIDynamicAnimator*)animator {

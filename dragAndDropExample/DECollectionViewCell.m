@@ -26,9 +26,6 @@
 }
 
 -(void)setImageView:(UIImageView *)imageView {
-    if (_imageView == imageView) {
-        return;
-    }
     _imageView = imageView;
     _imageView.frame = self.bounds;
     _imageView.autoresizingMask = UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth;
