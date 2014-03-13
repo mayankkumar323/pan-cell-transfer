@@ -148,14 +148,14 @@ const NSString *collectionCellIdentity = @"aDECollectionCell";
     } else if (gesture.state == UIGestureRecognizerStateChanged) {
         //NSLog(@"Moving cell #%i, cell=%@", self.currentSelectedCellIndexPath.row, gesture.view);
         CGFloat panAmount = fabs(touchLocation.y-self.panInitialTouchLocation.y);
-        if (panAmount > kMinPanToMoveCell) {
+        if (panAmount >= kMinPanToMoveCell) {
             if (!self.attachmentBehavior) {
                 //Create snapshot we will attach to behavior
                 self.currentSelectedCellSnapshot = [gesture.view snapshotViewAfterScreenUpdates:NO];
                 self.currentSelectedCellSnapshot.frame = [self.view convertRect:gesture.view.frame fromView:gesture.view.superview];
                 self.currentSelectedCellSnapshot.transform = gesture.view.transform;
-                self.currentSelectedCellSnapshot.frame = [self.view convertRect:gesture.view.frame fromView:gesture.view.superview];
                 [self.view addSubview:self.currentSelectedCellSnapshot];
+                
                 //Don't wait for the collection view to remove it. Hide it right away.
                 gesture.view.hidden = YES;
                 //Create attachment behavior, from view's center to the touch location
@@ -164,7 +164,7 @@ const NSString *collectionCellIdentity = @"aDECollectionCell";
                 [self.animator addBehavior:self.attachmentBehavior];
                 //Disable scroll
                 self.bottomCollectionView.scrollEnabled = NO;
-                //Remove cell from collection view
+                //Remove cell from bottom collection view
                 [self.bottomCollectionView performBatchUpdates:^{
                     [self.bottomCVDataSource removeObjectAtIndex:self.currentSelectedCellIndexPath.row];
                     [self.bottomCollectionView deleteItemsAtIndexPaths:@[self.currentSelectedCellIndexPath]];

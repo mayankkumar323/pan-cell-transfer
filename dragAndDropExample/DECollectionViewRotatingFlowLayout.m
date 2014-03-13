@@ -9,11 +9,11 @@
 #import "DECollectionViewRotatingFlowLayout.h"
 
 #define DEGREES_TO_RADIANS(angle) ((angle) / 180.0 * M_PI)
-#define ITEM_WIDTH 160
+#define ITEM_WIDTH 140  
 #define ITEM_HEIGHT 160
 #define ROTATION_CENTER_VERTICAL_OFFSET 300
-#define ROTATION_ANGLE_DIVIDER 8
-#define SPACING_BETWEEN_CELLS -80
+#define ROTATION_ANGLE_DIVIDER 4
+#define SPACING_BETWEEN_CELLS -10
 
 @implementation DECollectionViewRotatingFlowLayout
 
@@ -74,8 +74,7 @@
     return (inputNumber - fromMin) / (fromMax - fromMin) * (toMax - toMin) + toMin;
 }
 
--(CGPoint)calculateTranslateBy:(CGFloat)horizontalCenter attribs:(UICollectionViewLayoutAttributes *) layoutAttributes{
-    
+-(CGPoint)calculateTranslateBy:(CGFloat)horizontalCenter attribs:(UICollectionViewLayoutAttributes *) layoutAttributes {
     float translateByY = -layoutAttributes.frame.size.height/2.0f;
     float distanceFromCenter = layoutAttributes.center.x - horizontalCenter;
     float translateByX = 0.0f;
@@ -86,34 +85,14 @@
         translateByX = -1 * distanceFromCenter;
     }
     return CGPointMake(distanceFromCenter, translateByY);
-    
 }
 
 
--(float)calculateRotationFromViewPortDistance:(float)x center:(float)horizontalCenter{
+-(float)calculateRotationFromViewPortDistance:(float)x center:(float)horizontalCenter {
     
     float rotateByDegrees = [self remapNumbersToRange:x fromMin:-122 fromMax:258 toMin:-35 toMax:35];
     return rotateByDegrees;
 }
-
-//- (CGPoint)targetContentOffsetForProposedContentOffset:(CGPoint)proposedContentOffset withScrollingVelocity:(CGPoint)velocity {
-//
-//    CGFloat offsetAdjustment = CGFLOAT_MAX;
-//    CGFloat horizontalCenter = proposedContentOffset.x + (CGRectGetWidth(self.collectionView.bounds) / 1.4f);
-//
-//    CGRect targetRect = CGRectMake(proposedContentOffset.x,
-//                                   0.0f, self.collectionView.bounds.size.width, self.collectionView.bounds.size.height);
-//
-//    NSArray *array = [super layoutAttributesForElementsInRect:targetRect];
-//    for (UICollectionViewLayoutAttributes* layoutAttributes in array) {
-//        CGFloat distanceFromCenter = layoutAttributes.center.x - horizontalCenter;
-//        if (ABS(distanceFromCenter) < ABS(offsetAdjustment)) {
-//            offsetAdjustment = distanceFromCenter;
-//        }
-//    }
-//
-//    return CGPointMake(proposedContentOffset.x + offsetAdjustment, proposedContentOffset.y);
-//}
 
 - (BOOL)shouldInvalidateLayoutForBoundsChange:(CGRect)newBounds {
     return YES;
