@@ -38,9 +38,6 @@
 }
 
 - (void) setIsPlaceHolder:(BOOL)isPlaceHolder {
-    if (_isPlaceHolder == isPlaceHolder) {
-        return;
-    }
     _isPlaceHolder = isPlaceHolder;
     if (isPlaceHolder) {
         self.placeHolderView.frame = self.bounds;

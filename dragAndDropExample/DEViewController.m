@@ -9,6 +9,7 @@
 #import "DEViewController.h"
 #import "DECollectionViewCell.h"
 #import "UIImage+imageCreator.h"
+#import "UIView+ShakeAnimation.h"
 
 const CGFloat kMinPanToMoveCell = 50;
 const CGFloat kMinPanToDropCellToTopCV = kMinPanToMoveCell+100;
@@ -82,7 +83,6 @@ const NSString *collectionCellIdentity = @"aDECollectionCell";
     [self.topCollectionView registerClass:[DECollectionViewCell class] forCellWithReuseIdentifier:[collectionCellIdentity copy]];
     
     self.animator = [[UIDynamicAnimator alloc] initWithReferenceView:self.view];
-    self.animator.delegate = self;
     
     self.bottomCollectionView.clipsToBounds = NO;
     self.topCollectionView.clipsToBounds = NO;
@@ -93,7 +93,7 @@ const NSString *collectionCellIdentity = @"aDECollectionCell";
     // Dispose of any resources that can be recreated.
 }
 
-#pragma mark - UICollectionViewDataSource
+#pragma mark - UICollectionViewDataSource Methods
 
 - (NSInteger)numberOfSectionsInCollectionView:(UICollectionView*)collectionView {
     return 1;
@@ -121,17 +121,19 @@ const NSString *collectionCellIdentity = @"aDECollectionCell";
         cell.imageView = self.topCVDataSource[indexPath.item];
         if (self.cellDropIndex && indexPath.row == self.cellDropIndex.row) {
             cell.isPlaceHolder = YES;
+        } else {
+            cell.isPlaceHolder = NO;
         }
         return cell;
     }
     return nil;
 }
 
+#pragma  mark - Gesture Recognizer Methods
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
     return YES;
 }
 
-#pragma  mark - Handle Pan
 - (void) handlePanOnCell:(UIPanGestureRecognizer*)gesture {
     CGPoint touchLocation = [gesture locationInView:self.view];
     if (gesture.state == UIGestureRecognizerStateBegan) {
@@ -208,13 +210,16 @@ const NSString *collectionCellIdentity = @"aDECollectionCell";
     }
 }
 
+#pragma mark - Collection View Data Source Manipulaion
 - (void) insertPlaceHolderToTopCollection {
     if (!self.cellDropIndex) {
         self.cellDropIndex = [NSIndexPath indexPathForRow:((NSIndexPath*)[[self.topCollectionView indexPathsForVisibleItems] objectAtIndex:1]).row inSection:0];
         [self.topCollectionView performBatchUpdates:^{
             [self.topCVDataSource insertObject:self.currentSelectedCellData atIndex:self.cellDropIndex.row];
             [self.topCollectionView insertItemsAtIndexPaths:@[self.cellDropIndex]];
-        }completion:nil];
+        }completion:^(BOOL finished){
+            [self shakeCells];
+        }];
     }
 }
 
@@ -225,7 +230,9 @@ const NSString *collectionCellIdentity = @"aDECollectionCell";
         [self.topCollectionView performBatchUpdates:^{
             [self.topCVDataSource removeObjectAtIndex:tempIndex.row];
             [self.topCollectionView deleteItemsAtIndexPaths:@[tempIndex]];
-        }completion:nil];
+        }completion:^(BOOL finished){
+            [self stopCellShake];
+        }];
     }
 }
 
@@ -263,11 +270,31 @@ const NSString *collectionCellIdentity = @"aDECollectionCell";
         //Clean up
         self.currentSelectedCellIndexPath = nil;
         self.currentSelectedCellSnapshot = nil;
+        [self stopCellShake];
     }
 }
 
-- (void)dynamicAnimatorDidPause:(UIDynamicAnimator*)animator {
-    NSLog(@"paused");
+#pragma mark - Shake Animation Methods
+- (void) shakeCells {
+    if (self.cellDropIndex) {
+        //Shake cells
+        NSArray *cells = [self.topCollectionView visibleCells];
+        for (DECollectionViewCell *cell in cells) {
+            if (!cell.isPlaceHolder) {
+                [cell startShakeAnimation];
+            }
+        }
+    }
+}
+
+- (void) stopCellShake {
+    if (!self.cellDropIndex) {
+        //Stop Shake
+        NSArray *cells = [self.topCollectionView visibleCells];
+        for (DECollectionViewCell *cell in cells) {
+            [cell stopShakeAnimation];
+        }
+    }
 }
 
 @end

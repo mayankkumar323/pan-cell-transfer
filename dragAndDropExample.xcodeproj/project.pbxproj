@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		95F7CB5318D681860050DEA4 /* UIView+ShakeAnimation.m in Sources */ = {isa = PBXBuildFile; fileRef = 95F7CB5218D681860050DEA4 /* UIView+ShakeAnimation.m */; };
 		C2FD47A318C98CFE001E64B8 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C2FD47A218C98CFE001E64B8 /* Foundation.framework */; };
 		C2FD47A518C98CFE001E64B8 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C2FD47A418C98CFE001E64B8 /* CoreGraphics.framework */; };
 		C2FD47A718C98CFE001E64B8 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C2FD47A618C98CFE001E64B8 /* UIKit.framework */; };
@@ -37,6 +38,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		95F7CB5118D681860050DEA4 /* UIView+ShakeAnimation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIView+ShakeAnimation.h"; sourceTree = "<group>"; };
+		95F7CB5218D681860050DEA4 /* UIView+ShakeAnimation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIView+ShakeAnimation.m"; sourceTree = "<group>"; };
 		C2FD479F18C98CFE001E64B8 /* dragAndDropExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = dragAndDropExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C2FD47A218C98CFE001E64B8 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		C2FD47A418C98CFE001E64B8 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -88,6 +91,17 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		95F7CB5018D681390050DEA4 /* Categories */ = {
+			isa = PBXGroup;
+			children = (
+				C2FD47DD18C994DD001E64B8 /* UIImage+imageCreator.h */,
+				C2FD47DE18C994DD001E64B8 /* UIImage+imageCreator.m */,
+				95F7CB5118D681860050DEA4 /* UIView+ShakeAnimation.h */,
+				95F7CB5218D681860050DEA4 /* UIView+ShakeAnimation.m */,
+			);
+			name = Categories;
+			sourceTree = "<group>";
+		};
 		C2FD479618C98CFE001E64B8 = {
 			isa = PBXGroup;
 			children = (
@@ -130,8 +144,7 @@
 				C2FD47D818C99004001E64B8 /* DECollectionViewCell.m */,
 				C2FD47DA18C9903B001E64B8 /* DECollectionViewRotatingFlowLayout.h */,
 				C2FD47DB18C9903B001E64B8 /* DECollectionViewRotatingFlowLayout.m */,
-				C2FD47DD18C994DD001E64B8 /* UIImage+imageCreator.h */,
-				C2FD47DE18C994DD001E64B8 /* UIImage+imageCreator.m */,
+				95F7CB5018D681390050DEA4 /* Categories */,
 				C2FD47BA18C98CFE001E64B8 /* Images.xcassets */,
 				C2FD47A918C98CFE001E64B8 /* Supporting Files */,
 			);
@@ -265,6 +278,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				95F7CB5318D681860050DEA4 /* UIView+ShakeAnimation.m in Sources */,
 				C2FD47AF18C98CFE001E64B8 /* main.m in Sources */,
 				C2FD47D918C99004001E64B8 /* DECollectionViewCell.m in Sources */,
 				C2FD47B918C98CFE001E64B8 /* DEViewController.m in Sources */,
@@ -479,6 +493,7 @@
 				C2FD47D318C98CFE001E64B8 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		C2FD47D418C98CFE001E64B8 /* Build configuration list for PBXNativeTarget "dragAndDropExampleTests" */ = {
 			isa = XCConfigurationList;
@@ -487,6 +502,7 @@
 				C2FD47D618C98CFE001E64B8 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
