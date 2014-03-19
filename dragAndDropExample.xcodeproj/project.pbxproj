@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		954A01F918D969A100D0A70E /* DECellData.m in Sources */ = {isa = PBXBuildFile; fileRef = 954A01F818D969A100D0A70E /* DECellData.m */; };
 		95F7CB5318D681860050DEA4 /* UIView+ShakeAnimation.m in Sources */ = {isa = PBXBuildFile; fileRef = 95F7CB5218D681860050DEA4 /* UIView+ShakeAnimation.m */; };
 		C2FD47A318C98CFE001E64B8 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C2FD47A218C98CFE001E64B8 /* Foundation.framework */; };
 		C2FD47A518C98CFE001E64B8 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C2FD47A418C98CFE001E64B8 /* CoreGraphics.framework */; };
@@ -38,6 +39,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		954A01F718D969A100D0A70E /* DECellData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DECellData.h; sourceTree = "<group>"; };
+		954A01F818D969A100D0A70E /* DECellData.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DECellData.m; sourceTree = "<group>"; };
 		95F7CB5118D681860050DEA4 /* UIView+ShakeAnimation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIView+ShakeAnimation.h"; sourceTree = "<group>"; };
 		95F7CB5218D681860050DEA4 /* UIView+ShakeAnimation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIView+ShakeAnimation.m"; sourceTree = "<group>"; };
 		C2FD479F18C98CFE001E64B8 /* dragAndDropExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = dragAndDropExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -140,6 +143,8 @@
 				C2FD47B418C98CFE001E64B8 /* Main.storyboard */,
 				C2FD47B718C98CFE001E64B8 /* DEViewController.h */,
 				C2FD47B818C98CFE001E64B8 /* DEViewController.m */,
+				954A01F718D969A100D0A70E /* DECellData.h */,
+				954A01F818D969A100D0A70E /* DECellData.m */,
 				C2FD47D718C99004001E64B8 /* DECollectionViewCell.h */,
 				C2FD47D818C99004001E64B8 /* DECollectionViewCell.m */,
 				C2FD47DA18C9903B001E64B8 /* DECollectionViewRotatingFlowLayout.h */,
@@ -280,6 +285,7 @@
 			files = (
 				95F7CB5318D681860050DEA4 /* UIView+ShakeAnimation.m in Sources */,
 				C2FD47AF18C98CFE001E64B8 /* main.m in Sources */,
+				954A01F918D969A100D0A70E /* DECellData.m in Sources */,
 				C2FD47D918C99004001E64B8 /* DECollectionViewCell.m in Sources */,
 				C2FD47B918C98CFE001E64B8 /* DEViewController.m in Sources */,
 				C2FD47B318C98CFE001E64B8 /* DEAppDelegate.m in Sources */,

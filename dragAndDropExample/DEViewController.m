@@ -8,7 +8,7 @@
 
 #import "DEViewController.h"
 #import "DECollectionViewCell.h"
-#import "UIImage+imageCreator.h"
+#import "DECellData.h"
 #import "UIView+ShakeAnimation.h"
 
 const CGFloat kMinPanToMoveCell = 50;
@@ -20,7 +20,10 @@ const NSString *collectionCellIdentity = @"aDECollectionCell";
     <UICollectionViewDataSource,
     UICollectionViewDelegate,
     UIDynamicAnimatorDelegate,
-    UIGestureRecognizerDelegate>
+    UIGestureRecognizerDelegate,
+    UIScrollViewDelegate>
+
+@property (weak, nonatomic) IBOutlet UILabel *currentCellHeader;
 @property (nonatomic, weak) IBOutlet UICollectionView *bottomCollectionView;
 @property (nonatomic, weak) IBOutlet UICollectionView *topCollectionView;
 @property (nonatomic, strong) NSMutableArray * bottomCVDataSource;
@@ -40,24 +43,23 @@ const NSString *collectionCellIdentity = @"aDECollectionCell";
 
 @implementation DEViewController
 - (void) doInits {
-    CGSize size = CGSizeMake(200, 200);
-    self.bottomCVDataSource= [NSMutableArray arrayWithArray:@[[[UIImageView alloc] initWithImage:[UIImage imageOfSize:size withString:@"A"]],
-                                                              [[UIImageView alloc] initWithImage:[UIImage imageOfSize:size withString:@"B"]],
-                                                              [[UIImageView alloc] initWithImage:[UIImage imageOfSize:size withString:@"C"]],
-                                                              [[UIImageView alloc] initWithImage:[UIImage imageOfSize:size withString:@"D"]],
-                                                              [[UIImageView alloc] initWithImage:[UIImage imageOfSize:size withString:@"E"]],
-                                                              [[UIImageView alloc] initWithImage:[UIImage imageOfSize:size withString:@"F"]],
-                                                              [[UIImageView alloc] initWithImage:[UIImage imageOfSize:size withString:@"G"]],
-                                                              [[UIImageView alloc] initWithImage:[UIImage imageOfSize:size withString:@"H"]],
-                                                              [[UIImageView alloc] initWithImage:[UIImage imageOfSize:size withString:@"I"]],
-                                                              [[UIImageView alloc] initWithImage:[UIImage imageOfSize:size withString:@"J"]],
-                                                              [[UIImageView alloc] initWithImage:[UIImage imageOfSize:size withString:@"K"]]]];
-    self.topCVDataSource= [NSMutableArray arrayWithArray:@[[[UIImageView alloc] initWithImage:[UIImage imageOfSize:size withString:@"1"]],
-                                                           [[UIImageView alloc] initWithImage:[UIImage imageOfSize:size withString:@"2"]],
-                                                           [[UIImageView alloc] initWithImage:[UIImage imageOfSize:size withString:@"3"]],
-                                                           [[UIImageView alloc] initWithImage:[UIImage imageOfSize:size withString:@"4"]],
-                                                           [[UIImageView alloc] initWithImage:[UIImage imageOfSize:size withString:@"5"]],
-                                                           [[UIImageView alloc] initWithImage:[UIImage imageOfSize:size withString:@"6"]]]];
+    self.bottomCVDataSource= [NSMutableArray arrayWithArray:@[[[DECellData alloc] initWithString:@"A"],
+                                                              [[DECellData alloc] initWithString:@"B"],
+                                                              [[DECellData alloc] initWithString:@"C"],
+                                                              [[DECellData alloc] initWithString:@"D"],
+                                                              [[DECellData alloc] initWithString:@"E"],
+                                                              [[DECellData alloc] initWithString:@"F"],
+                                                              [[DECellData alloc] initWithString:@"G"],
+                                                              [[DECellData alloc] initWithString:@"H"],
+                                                              [[DECellData alloc] initWithString:@"I"],
+                                                              [[DECellData alloc] initWithString:@"J"],
+                                                              [[DECellData alloc] initWithString:@"K"]]];
+    self.topCVDataSource= [NSMutableArray arrayWithArray:@[[[DECellData alloc] initWithString:@"1"],
+                                                           [[DECellData alloc] initWithString:@"2"],
+                                                           [[DECellData alloc] initWithString:@"3"],
+                                                           [[DECellData alloc] initWithString:@"4"],
+                                                           [[DECellData alloc] initWithString:@"5"],
+                                                           [[DECellData alloc] initWithString:@"6"]]];
 }
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
@@ -86,6 +88,7 @@ const NSString *collectionCellIdentity = @"aDECollectionCell";
     
     self.bottomCollectionView.clipsToBounds = NO;
     self.topCollectionView.clipsToBounds = NO;
+    self.currentCellHeader.text = [NSString stringWithFormat:@"This is data for cell \"%@\"", ((DECellData*)[self.bottomCVDataSource firstObject]).cellName];
 }
 
 - (void)didReceiveMemoryWarning {
@@ -93,8 +96,19 @@ const NSString *collectionCellIdentity = @"aDECollectionCell";
     // Dispose of any resources that can be recreated.
 }
 
-#pragma mark - UICollectionViewDataSource Methods
+-(UIStatusBarStyle)preferredStatusBarStyle{
+    return UIStatusBarStyleLightContent;
+}
 
+#pragma mark - UIScrollViewDelegate Methods
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
+    if (scrollView == self.bottomCollectionView) {
+        NSIndexPath *centerCellIndex = [self.bottomCollectionView indexPathForItemAtPoint:CGPointMake(CGRectGetMidX(self.bottomCollectionView.bounds) , CGRectGetMidY(self.bottomCollectionView.bounds))];
+        self.currentCellHeader.text = [NSString stringWithFormat:@"This is data for cell \"%@\"", ((DECellData*)[self.bottomCVDataSource objectAtIndex:centerCellIndex.row]).cellName];
+    }
+}
+
+#pragma mark - UICollectionViewDataSource Methods
 - (NSInteger)numberOfSectionsInCollectionView:(UICollectionView*)collectionView {
     return 1;
 }
@@ -111,14 +125,14 @@ const NSString *collectionCellIdentity = @"aDECollectionCell";
 -(UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
     if (collectionView == self.bottomCollectionView) {
         DECollectionViewCell *cell = (DECollectionViewCell *)[collectionView dequeueReusableCellWithReuseIdentifier:[collectionCellIdentity copy] forIndexPath:indexPath];
-        cell.imageView = self.bottomCVDataSource[indexPath.item];
+        cell.imageView = ((DECellData*)self.bottomCVDataSource[indexPath.item]).cellImageView;
         UIPanGestureRecognizer *panGestureRecog = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePanOnCell:)];
         panGestureRecog.delegate = self;
         cell.gestureRecognizer = panGestureRecog;
         return cell;
     } else if (collectionView == self.topCollectionView){
         DECollectionViewCell *cell = (DECollectionViewCell *)[collectionView dequeueReusableCellWithReuseIdentifier:[collectionCellIdentity copy] forIndexPath:indexPath];
-        cell.imageView = self.topCVDataSource[indexPath.item];
+        cell.imageView = ((DECellData*)self.topCVDataSource[indexPath.item]).cellImageView;
         if (self.cellDropIndex && indexPath.row == self.cellDropIndex.row) {
             cell.isPlaceHolder = YES;
         } else {
