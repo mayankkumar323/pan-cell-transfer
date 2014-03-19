@@ -11,6 +11,7 @@
 #define DEGREES_TO_RADIANS(angle) ((angle) / 180.0 * M_PI)
 #define ITEM_WIDTH 140  
 #define ITEM_HEIGHT 160
+#define LEFT_INSET ITEM_WIDTH/8
 #define ROTATION_CENTER_VERTICAL_OFFSET 300
 #define ROTATION_ANGLE_DIVIDER 4
 #define SPACING_BETWEEN_CELLS -10
@@ -21,7 +22,7 @@
     CGFloat collectionViewHeight = self.collectionView.bounds.size.height;
     self.itemSize = CGSizeMake(ITEM_WIDTH, ITEM_HEIGHT);
     //the item height must be less that the height of the UICollectionView minus the section insets top and bottom values.
-    self.sectionInset = UIEdgeInsetsMake(collectionViewHeight-ITEM_HEIGHT-1, ITEM_WIDTH/8, 0, ITEM_WIDTH/4);
+    self.sectionInset = UIEdgeInsetsMake(collectionViewHeight-ITEM_HEIGHT-1, LEFT_INSET, 0, ITEM_WIDTH/2);
     self.scrollDirection = UICollectionViewScrollDirectionHorizontal;
     self.minimumLineSpacing = SPACING_BETWEEN_CELLS;
 }
@@ -92,6 +93,24 @@
     
     float rotateByDegrees = [self remapNumbersToRange:x fromMin:-122 fromMax:258 toMin:-35 toMax:35];
     return rotateByDegrees;
+}
+
+- (CGPoint)targetContentOffsetForProposedContentOffset:(CGPoint)proposedContentOffset withScrollingVelocity:(CGPoint)velocity {
+
+    CGFloat offsetAdjustment = CGFLOAT_MAX;
+    CGFloat horizontalCenter = proposedContentOffset.x + (CGRectGetWidth(self.collectionView.bounds) / 2.f) - LEFT_INSET;
+
+    CGRect visibleRect = CGRectMake(proposedContentOffset.x, 0.0f, self.collectionView.bounds.size.width, self.collectionView.bounds.size.height);
+
+    NSArray *array = [super layoutAttributesForElementsInRect:visibleRect];
+    for (UICollectionViewLayoutAttributes* layoutAttributes in array) {
+        CGFloat distanceFromCenter = layoutAttributes.center.x - horizontalCenter;
+        if (ABS(distanceFromCenter) < ABS(offsetAdjustment)) {
+            offsetAdjustment = distanceFromCenter;
+        }
+    }
+
+    return CGPointMake(proposedContentOffset.x + offsetAdjustment, proposedContentOffset.y);
 }
 
 - (BOOL)shouldInvalidateLayoutForBoundsChange:(CGRect)newBounds {
