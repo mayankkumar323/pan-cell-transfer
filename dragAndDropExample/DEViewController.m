@@ -38,7 +38,8 @@ const NSString *collectionCellIdentity = @"aDECollectionCell";
 @property (nonatomic, strong) UIView *currentSelectedCellSnapshot;
 @property (nonatomic, strong) UIImageView *currentSelectedCellData;
 
-@property (nonatomic) NSIndexPath *cellDropIndex;
+@property (nonatomic) NSIndexPath *placeHolderCellIndex;
+@property (nonatomic) BOOL removedFromTop;
 @end
 
 @implementation DEViewController
@@ -126,14 +127,17 @@ const NSString *collectionCellIdentity = @"aDECollectionCell";
     if (collectionView == self.bottomCollectionView) {
         DECollectionViewCell *cell = (DECollectionViewCell *)[collectionView dequeueReusableCellWithReuseIdentifier:[collectionCellIdentity copy] forIndexPath:indexPath];
         cell.imageView = ((DECellData*)self.bottomCVDataSource[indexPath.item]).cellImageView;
-        UIPanGestureRecognizer *panGestureRecog = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePanOnCell:)];
+        UIPanGestureRecognizer *panGestureRecog = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePanOnBottomCell:)];
         panGestureRecog.delegate = self;
         cell.gestureRecognizer = panGestureRecog;
         return cell;
     } else if (collectionView == self.topCollectionView){
         DECollectionViewCell *cell = (DECollectionViewCell *)[collectionView dequeueReusableCellWithReuseIdentifier:[collectionCellIdentity copy] forIndexPath:indexPath];
         cell.imageView = ((DECellData*)self.topCVDataSource[indexPath.item]).cellImageView;
-        if (self.cellDropIndex && indexPath.row == self.cellDropIndex.row) {
+        UIPanGestureRecognizer *panGestureRecog = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handlePanOnTopCell:)];
+        panGestureRecog.delegate = self;
+        cell.gestureRecognizer = panGestureRecog;
+        if (self.placeHolderCellIndex && indexPath.row == self.placeHolderCellIndex.row) {
             cell.isPlaceHolder = YES;
         } else {
             cell.isPlaceHolder = NO;
@@ -148,7 +152,88 @@ const NSString *collectionCellIdentity = @"aDECollectionCell";
     return YES;
 }
 
-- (void) handlePanOnCell:(UIPanGestureRecognizer*)gesture {
+- (void) handlePanOnTopCell:(UIPanGestureRecognizer*)gesture {
+    CGPoint touchLocation = [gesture locationInView:self.view];
+    if (gesture.state == UIGestureRecognizerStateBegan) {
+        //Remove all old behaviors
+        [self.animator removeAllBehaviors];
+        //Save initial center for snap
+        self.pannedViewInitialCenter = gesture.view.center;
+        //Save index
+        self.currentSelectedCellIndexPath = [self.topCollectionView indexPathForCell:(DECollectionViewCell*)gesture.view];
+        //Save data
+        self.currentSelectedCellData = [self.topCVDataSource objectAtIndex:self.currentSelectedCellIndexPath.row];
+        //Get initial touch location
+        self.panInitialTouchLocation = touchLocation;
+    } else if (gesture.state == UIGestureRecognizerStateChanged) {
+        //NSLog(@"Moving cell #%i, cell=%@", self.currentSelectedCellIndexPath.row, gesture.view);
+        CGFloat panAmount = fabs(touchLocation.y-self.panInitialTouchLocation.y);
+        if (panAmount >= kMinPanToMoveCell) {
+            if (!self.attachmentBehavior) {
+                //Create snapshot we will attach to behavior
+                self.currentSelectedCellSnapshot = [gesture.view snapshotViewAfterScreenUpdates:NO];
+                self.currentSelectedCellSnapshot.frame = [self.view convertRect:gesture.view.frame fromView:gesture.view.superview];
+                self.currentSelectedCellSnapshot.transform = gesture.view.transform;
+                [self.view addSubview:self.currentSelectedCellSnapshot];
+                
+                //Disable scroll
+                self.topCollectionView.scrollEnabled = NO;
+                
+                //Create attachment behavior, from view's center to the touch location
+                self.attachmentBehavior = [[UIAttachmentBehavior alloc] initWithItem:self.currentSelectedCellSnapshot offsetFromCenter:UIOffsetMake(0, 0) attachedToAnchor:[gesture locationInView:self.view]];
+                //Add behavior to animator
+                [self.animator addBehavior:self.attachmentBehavior];
+                
+                //Covert cell to placehold cell
+                DECollectionViewCell *cell = (DECollectionViewCell*)gesture.view;
+                cell.isPlaceHolder = YES;
+                self.placeHolderCellIndex = self.currentSelectedCellIndexPath;
+            }
+            self.attachmentBehavior.anchorPoint = [gesture locationInView:self.view];
+        }
+        if (panAmount >= kMinPanToDropCellToTopCV) {
+            [self removePlaceHolderFromTopCollection];
+            self.removedFromTop = YES;
+        } else if (self.removedFromTop) {
+            [self insertPlaceHolderToTopCollection];
+            self.removedFromTop = NO;
+        }
+    } else {
+        if (self.attachmentBehavior.dynamicAnimator) {
+            [self.animator removeAllBehaviors];
+            self.attachmentBehavior = nil;
+            
+            CGFloat panAmount = fabs(touchLocation.y-self.panInitialTouchLocation.y);
+            if (panAmount < kMinPanToDropCellToTopCV) {
+                //Add back to Top collection view with snap behavior
+                DECollectionViewCell *placeHolderCell = (DECollectionViewCell*)[self.topCollectionView cellForItemAtIndexPath:self.placeHolderCellIndex];
+                UISnapBehavior *snap = [[UISnapBehavior alloc] initWithItem:self.currentSelectedCellSnapshot snapToPoint:[self.view convertPoint:placeHolderCell.center fromView:placeHolderCell.superview]];
+                [self.animator addBehavior:snap];
+                [self performSelector:@selector(addCellToTopCollectionView) withObject:nil afterDelay:.3];
+            } else {
+                //Add to the bottom collection view
+                self.currentSelectedCellIndexPath = [self dropIndexForCollectionView:self.bottomCollectionView];
+                DECollectionViewCell *placeHolderCell = (DECollectionViewCell*)[self.bottomCollectionView cellForItemAtIndexPath:self.currentSelectedCellIndexPath];
+                if (placeHolderCell) {
+                    [UIView animateWithDuration:.33 animations:^{
+                        CGRect frame = self.currentSelectedCellSnapshot.frame;
+                        CGSize bottomCVCellSize = [self.bottomCollectionView cellForItemAtIndexPath:self.currentSelectedCellIndexPath].frame.size;
+                        frame = CGRectInset(frame, frame.size.width-bottomCVCellSize.width, frame.size.height-bottomCVCellSize.height);
+                        self.currentSelectedCellSnapshot.frame = frame;
+                    }];
+                }
+                CGPoint dropPoint = placeHolderCell ? [self.view convertPoint:placeHolderCell.center fromView:placeHolderCell.superview] : CGPointMake(self.bottomCollectionView.center.x, self.bottomCollectionView.center.y);
+                UISnapBehavior *snap = [[UISnapBehavior alloc] initWithItem:self.currentSelectedCellSnapshot snapToPoint:dropPoint];
+                [self.animator addBehavior:snap];
+                [self performSelector:@selector(addDeletedCellBackToBottomCollectionView) withObject:nil afterDelay:.3];
+            }
+            self.removedFromTop = NO;
+            self.topCollectionView.scrollEnabled = YES;
+        }
+    }
+}
+
+- (void) handlePanOnBottomCell:(UIPanGestureRecognizer*)gesture {
     CGPoint touchLocation = [gesture locationInView:self.view];
     if (gesture.state == UIGestureRecognizerStateBegan) {
         //Remove all old behaviors
@@ -208,14 +293,17 @@ const NSString *collectionCellIdentity = @"aDECollectionCell";
                 [self performSelector:@selector(addDeletedCellBackToBottomCollectionView) withObject:nil afterDelay:.3];
             } else {
                 //Add to the top collection view
-                DECollectionViewCell *placeHolderCell = (DECollectionViewCell*)[self.topCollectionView cellForItemAtIndexPath:self.cellDropIndex];
-                [UIView animateWithDuration:.33 animations:^{
-                    CGRect frame = self.currentSelectedCellSnapshot.frame;
-                    CGSize topCVCellSize = [self.topCollectionView cellForItemAtIndexPath:self.cellDropIndex].frame.size;
-                    frame = CGRectInset(frame, frame.size.width-topCVCellSize.width, frame.size.height-topCVCellSize.height);
-                    self.currentSelectedCellSnapshot.frame = frame;
-                }];
-                UISnapBehavior *snap = [[UISnapBehavior alloc] initWithItem:self.currentSelectedCellSnapshot snapToPoint:[self.view convertPoint:placeHolderCell.center fromView:placeHolderCell.superview]];
+                DECollectionViewCell *placeHolderCell = (DECollectionViewCell*)[self.topCollectionView cellForItemAtIndexPath:self.placeHolderCellIndex];
+                if (placeHolderCell) {
+                    [UIView animateWithDuration:.33 animations:^{
+                        CGRect frame = self.currentSelectedCellSnapshot.frame;
+                        CGSize topCVCellSize = [self.topCollectionView cellForItemAtIndexPath:self.placeHolderCellIndex].frame.size;
+                        frame = CGRectInset(frame, frame.size.width-topCVCellSize.width, frame.size.height-topCVCellSize.height);
+                        self.currentSelectedCellSnapshot.frame = frame;
+                    }];
+                }
+                CGPoint dropPoint = placeHolderCell ? [self.view convertPoint:placeHolderCell.center fromView:placeHolderCell.superview] : CGPointMake(self.topCollectionView.center.x, self.topCollectionView.center.y);
+                UISnapBehavior *snap = [[UISnapBehavior alloc] initWithItem:self.currentSelectedCellSnapshot snapToPoint:dropPoint];
                 [self.animator addBehavior:snap];
                 [self performSelector:@selector(addCellToTopCollectionView) withObject:nil afterDelay:.3];
             }
@@ -226,11 +314,11 @@ const NSString *collectionCellIdentity = @"aDECollectionCell";
 
 #pragma mark - Collection View Data Source Manipulaion
 - (void) insertPlaceHolderToTopCollection {
-    if (!self.cellDropIndex) {
-        self.cellDropIndex = [NSIndexPath indexPathForRow:((NSIndexPath*)[[self.topCollectionView indexPathsForVisibleItems] objectAtIndex:1]).row inSection:0];
+    if (!self.placeHolderCellIndex) {
+        self.placeHolderCellIndex = [self dropIndexForCollectionView:self.topCollectionView];
         [self.topCollectionView performBatchUpdates:^{
-            [self.topCVDataSource insertObject:self.currentSelectedCellData atIndex:self.cellDropIndex.row];
-            [self.topCollectionView insertItemsAtIndexPaths:@[self.cellDropIndex]];
+            [self.topCVDataSource insertObject:self.currentSelectedCellData atIndex:self.placeHolderCellIndex.row];
+            [self.topCollectionView insertItemsAtIndexPaths:@[self.placeHolderCellIndex]];
         }completion:^(BOOL finished){
             [self shakeCells];
         }];
@@ -238,9 +326,9 @@ const NSString *collectionCellIdentity = @"aDECollectionCell";
 }
 
 - (void) removePlaceHolderFromTopCollection {
-    if (self.cellDropIndex) {
-        NSIndexPath *tempIndex = [self.cellDropIndex copy];
-        self.cellDropIndex = nil;
+    if (self.placeHolderCellIndex) {
+        NSIndexPath *tempIndex = [self.placeHolderCellIndex copy];
+        self.placeHolderCellIndex = nil;
         [self.topCollectionView performBatchUpdates:^{
             [self.topCVDataSource removeObjectAtIndex:tempIndex.row];
             [self.topCollectionView deleteItemsAtIndexPaths:@[tempIndex]];
@@ -276,9 +364,9 @@ const NSString *collectionCellIdentity = @"aDECollectionCell";
 }
 
 - (void) addCellToTopCollectionView {
-    if (self.cellDropIndex) {
-        DECollectionViewCell *placeHolderCell = (DECollectionViewCell*)[self.topCollectionView cellForItemAtIndexPath:self.cellDropIndex];
-        self.cellDropIndex = nil;
+    if (self.placeHolderCellIndex) {
+        DECollectionViewCell *placeHolderCell = (DECollectionViewCell*)[self.topCollectionView cellForItemAtIndexPath:self.placeHolderCellIndex];
+        self.placeHolderCellIndex = nil;
         placeHolderCell.isPlaceHolder = NO;
         [self.currentSelectedCellSnapshot removeFromSuperview];
         //Clean up
@@ -288,9 +376,21 @@ const NSString *collectionCellIdentity = @"aDECollectionCell";
     }
 }
 
+- (NSIndexPath*) dropIndexForCollectionView:(UICollectionView*)cv {
+    int count = [[cv indexPathsForVisibleItems] count];
+    if ( count < 2) {
+        return [NSIndexPath indexPathForRow:0 inSection:0];
+    }
+    int min = INT32_MAX;
+    for (NSIndexPath *index in [cv indexPathsForVisibleItems]) {
+        min = MIN(min, index.row);
+    }
+    return [NSIndexPath indexPathForRow:min+1 inSection:0];
+}
+
 #pragma mark - Shake Animation Methods
 - (void) shakeCells {
-    if (self.cellDropIndex) {
+    if (self.placeHolderCellIndex) {
         //Shake cells
         NSArray *cells = [self.topCollectionView visibleCells];
         for (DECollectionViewCell *cell in cells) {
@@ -302,7 +402,7 @@ const NSString *collectionCellIdentity = @"aDECollectionCell";
 }
 
 - (void) stopCellShake {
-    if (!self.cellDropIndex) {
+    if (!self.placeHolderCellIndex) {
         //Stop Shake
         NSArray *cells = [self.topCollectionView visibleCells];
         for (DECollectionViewCell *cell in cells) {
